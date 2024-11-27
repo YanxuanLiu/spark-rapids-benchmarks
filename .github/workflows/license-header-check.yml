@@ -12,22 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# A workflow to check license header of files
-
-name: Check License Headers
+# A workflow to check copyright/license header
+name: license header check
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
-  check-headers:
+  license-header-check:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.pull_request.title, '[bot]')"
     steps:
+      - name: Get checkout depth
+        run: |
+          echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 10 ))" >> $GITHUB_ENV
+
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
 
-      - name: license-check job
-        run: |
-          set -x
-          python3 .github/workflows/license-check/license-check.py
+      - name: license-header-check
+        uses: NVIDIA/spark-rapids-common/license-header-check@main
+        with:
+          included_file_patterns: |
+            *.sh,
+            *.template,
+            *.py,
+            *.yaml,
+            *.yml,
+            *.xml,
+            *.scala,
+            *.properties,
+            *.java,
+            *Makefile*,
+            *.sql
+      
